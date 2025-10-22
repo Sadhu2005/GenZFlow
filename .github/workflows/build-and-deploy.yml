@@ -52,6 +52,7 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
+      continue-on-error: true # Don't fail the entire workflow if FTP fails
     
     # Deploy Backend
     - name: Deploy Backend to Hostinger
@@ -71,25 +72,44 @@ jobs:
           **/logs/**
           **/uploads/**
           **/.env*
+      continue-on-error: true # Don't fail the entire workflow if FTP fails
+
+    # Alternative: Upload artifacts for manual deployment
+    - name: Upload Frontend Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: genzflow-frontend-dist
+        path: frontend/dist/
+        retention-days: 7
+
+    - name: Upload Backend Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: genzflow-backend-code
+        path: backend/
+        retention-days: 7
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/logs/**
+          **/uploads/**
+          **/.env*
     
     # Success Message
     - name: Deployment Success
       run: |
-        echo "🎉 GenZFlow deployed successfully!"
+        echo "🎉 GenZFlow build completed!"
         echo ""
-        echo "Frontend: https://genzflow.genzspace.in"
-        echo "Backend API: https://genzflow.genzspace.in:5000"
+        echo "✅ Frontend: Built and ready for deployment"
+        echo "✅ Backend: Built and ready for deployment"
+        echo "✅ Artifacts: Available for manual upload if FTP fails"
         echo ""
-        echo "Next Steps:"
-        echo "1. Import database schema via phpMyAdmin:"
-        echo "   - Go to Hostinger control panel"
-        echo "   - Open phpMyAdmin"
-        echo "   - Import backend/database/schema.sql"
+        echo "📁 Download artifacts from the 'Summary' tab if FTP deployment failed"
+        echo "🔧 Manual deployment instructions:"
+        echo "   1. Download 'genzflow-frontend-dist' artifact"
+        echo "   2. Upload contents to /public_html/ in Hostinger File Manager"
+        echo "   3. Download 'genzflow-backend-code' artifact"
+        echo "   4. Upload contents to /backend/ in Hostinger File Manager"
         echo ""
-        echo "2. Configure environment variables in Hostinger:"
-        echo "   - Set up Node.js environment"
-        echo "   - Add your database credentials"
-        echo ""
-        echo "3. Enable Node.js in Hostinger control panel"
-        echo "   - Set startup file to: server.js"
-        echo "   - Set Node.js version to: 18.x"
+        echo "🌐 Your site will be available at: https://genzflow.genzspace.in"
