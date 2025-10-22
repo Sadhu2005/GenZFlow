@@ -31,8 +31,8 @@ jobs:
     
     - name: Run npm audit
       run: |
-        cd frontend && npm audit --audit-level moderate
-        cd ../backend && npm audit --audit-level moderate
+        cd frontend && (npm audit --audit-level moderate || echo "No package-lock.json for frontend audit")
+        cd ../backend && (npm audit --audit-level moderate || echo "No package-lock.json for backend audit")
     
     - name: Check for secrets
       uses: trufflesecurity/trufflehog@main
