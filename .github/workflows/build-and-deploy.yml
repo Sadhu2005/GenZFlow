@@ -44,6 +44,8 @@ jobs:
         server: ${{ secrets.HOSTINGER_FTP_HOST }}
         username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
         password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+        port: 21
+        protocol: ftp
         local-dir: ./frontend/dist/
         server-dir: /public_html/
         exclude: |
@@ -58,6 +60,8 @@ jobs:
         server: ${{ secrets.HOSTINGER_FTP_HOST }}
         username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
         password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+        port: 21
+        protocol: ftp
         local-dir: ./backend/
         server-dir: /backend/
         exclude: |

@@ -1,0 +1,68 @@
+name: Manual Upload Instructions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  manual-upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    # Build Frontend
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+        echo "Frontend build completed"
+    
+    # Prepare Backend
+    - name: Prepare Backend
+      run: |
+        cd backend
+        npm install --production
+        echo "Backend prepared"
+    
+    # Create deployment package
+    - name: Create Deployment Package
+      run: |
+        mkdir -p deployment
+        cp -r frontend/dist/* deployment/
+        mkdir -p deployment/backend
+        cp -r backend/* deployment/backend/
+        echo "Deployment package created"
+    
+    # Upload as artifact
+    - name: Upload Deployment Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: genzflow-deployment
+        path: deployment/
+    
+    # Instructions
+    - name: Manual Deployment Instructions
+      run: |
+        echo "🚀 GenZFlow Build Complete!"
+        echo ""
+        echo "📦 Deployment package created and uploaded as artifact"
+        echo ""
+        echo "📋 Manual Deployment Steps:"
+        echo "1. Download the 'genzflow-deployment' artifact from this workflow"
+        echo "2. Extract the files"
+        echo "3. Login to Hostinger File Manager"
+        echo "4. Upload frontend files to public_html/"
+        echo "5. Upload backend folder to your domain directory"
+        echo "6. Import database schema via phpMyAdmin"
+        echo "7. Configure Node.js in Hostinger control panel"
+        echo ""
+        echo "🌐 Your site will be live at: https://genzflow.genzspace.in"
+        echo ""
+        echo "📞 Need help? Check the FTP-TROUBLESHOOTING-GUIDE.md file"
