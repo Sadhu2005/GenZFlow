@@ -39,7 +39,7 @@ jobs:
       if: ${{ inputs.deploy_frontend }}
       run: |
         cd frontend
-        npm ci
+        npm install
         npm run build
         echo "Frontend build completed"
     
@@ -47,7 +47,7 @@ jobs:
       if: ${{ inputs.deploy_backend }}
       run: |
         cd backend
-        npm ci --production
+        npm install --production
         echo "Backend prepared for deployment"
     
     - name: Deploy Frontend
