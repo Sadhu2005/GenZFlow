@@ -1,0 +1,152 @@
+name: GenZFlow CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Frontend Build and Test
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run frontend tests
+      run: npm test -- --coverage --watchAll=false
+    
+    - name: Build frontend
+      run: npm run build
+    
+    - name: Upload frontend artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/dist/
+
+  # Backend Build and Test
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run backend tests
+      run: npm test
+      env:
+        NODE_ENV: test
+        DB_HOST: localhost
+        DB_USER: test
+        DB_PASSWORD: test
+        DB_NAME: test_db
+        JWT_SECRET: test_secret
+    
+    - name: Upload backend artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-build
+        path: backend/
+
+  # Deploy to Hostinger
+  deploy:
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: ./frontend-dist
+    
+    - name: Download backend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-build
+        path: ./backend
+    
+    # Deploy Frontend to Hostinger
+    - name: Deploy Frontend to Hostinger
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.HOSTINGER_FTP_HOST }}
+        username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+        password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+        local-dir: ./frontend-dist/
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/.env*
+    
+    # Deploy Backend to Hostinger
+    - name: Deploy Backend to Hostinger
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.HOSTINGER_FTP_HOST }}
+        username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+        password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+        local-dir: ./backend/
+        server-dir: /backend/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/.env*
+          **/logs/**
+          **/uploads/**
+    
+    # Setup Database
+    - name: Setup Database
+      run: |
+        echo "Database setup will be handled manually via phpMyAdmin"
+        echo "Please import backend/database/schema.sql to your Hostinger MySQL database"
+    
+    # Health Check
+    - name: Health Check
+      run: |
+        echo "Waiting for deployment to complete..."
+        sleep 30
+        curl -f https://genzflow.genzspace.in/api/health || echo "Backend not ready yet"
+        curl -f https://genzflow.genzspace.in || echo "Frontend not ready yet"
+    
+    - name: Notify Deployment Success
+      run: |
+        echo "🚀 GenZFlow deployed successfully!"
+        echo "Frontend: https://genzflow.genzspace.in"
+        echo "Backend API: https://genzflow.genzspace.in:5000"

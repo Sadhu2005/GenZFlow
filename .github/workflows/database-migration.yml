@@ -1,0 +1,53 @@
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_type:
+        description: 'Migration type'
+        required: true
+        default: 'schema'
+        type: choice
+        options:
+        - schema
+        - data
+        - rollback
+
+jobs:
+  database-migration:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup MySQL
+      uses: mirromutth/mysql-action@v1.1
+      with:
+        host port: 3306
+        character set server: utf8mb4
+        collation server: utf8mb4_unicode_ci
+        mysql version: '8.0'
+        mysql root password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        mysql database: ${{ secrets.MYSQL_DATABASE }}
+        mysql user: ${{ secrets.MYSQL_USER }}
+        mysql password: ${{ secrets.MYSQL_PASSWORD }}
+    
+    - name: Run Schema Migration
+      if: github.event.inputs.migration_type == 'schema'
+      run: |
+        mysql -h localhost -u ${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} ${{ secrets.MYSQL_DATABASE }} < backend/database/schema.sql
+    
+    - name: Run Data Migration
+      if: github.event.inputs.migration_type == 'data'
+      run: |
+        echo "Data migration scripts would go here"
+    
+    - name: Run Rollback
+      if: github.event.inputs.migration_type == 'rollback'
+      run: |
+        echo "Rollback scripts would go here"
+    
+    - name: Verify Migration
+      run: |
+        mysql -h localhost -u ${{ secrets.MYSQL_USER }} -p${{ secrets.MYSQL_PASSWORD }} ${{ secrets.MYSQL_DATABASE }} -e "SHOW TABLES;"
