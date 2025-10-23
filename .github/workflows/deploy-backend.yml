@@ -1,64 +1,40 @@
-name: Deploy Backend to Render
+# Backend CI/CD - Use Render Auto-Deploy Instead
+# This workflow is disabled in favor of Render's built-in GitHub integration
+# 
+# To enable automatic deployment:
+# 1. Go to Render.com dashboard
+# 2. Select your backend service
+# 3. Go to Settings → Build & Deploy
+# 4. Enable "Auto-Deploy" and set branch to "main"
+# 5. Save settings
+#
+# This is much simpler and more reliable than GitHub Actions for Render deployment
+
+name: Backend CI/CD (Use Render Auto-Deploy)
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/deploy-backend.yml'
-  workflow_dispatch: # Allows manual trigger
+  workflow_dispatch: # Manual trigger only
 
 jobs:
-  deploy-backend:
+  info:
     runs-on: ubuntu-latest
-    name: Deploy Backend to Render
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: 'backend/package-lock.json'
-
-    - name: Install dependencies
+    - name: Render Auto-Deploy Info
       run: |
-        cd backend
-        npm ci
-
-    - name: Run tests (if available)
-      run: |
-        cd backend
-        npm test || echo "No tests configured"
-
-    - name: Build backend
-      run: |
-        cd backend
-        echo "Backend build completed"
-
-    - name: Deploy to Render
-      uses: johnbeynon/render-deploy-action@v1.0.0
-      with:
-        service-id: ${{ secrets.RENDER_SERVICE_ID }}
-        api-key: ${{ secrets.RENDER_API_KEY }}
-
-    - name: Deployment Success
-      run: |
-        echo "🎉 GenZFlow Backend deployed successfully!"
+        echo "🚀 Backend CI/CD Setup Instructions:"
         echo ""
-        echo "🔧 Backend API: https://genzflow-backend.onrender.com"
-        echo "📊 Environment: Production"
-        echo "🗄️ Database: Hostinger MySQL"
+        echo "1. Go to Render.com dashboard"
+        echo "2. Select your backend service (genzflow-backend)"
+        echo "3. Go to Settings → Build & Deploy"
+        echo "4. Enable 'Auto-Deploy'"
+        echo "5. Set branch to 'main'"
+        echo "6. Save settings"
         echo ""
-        echo "✅ Deployment Summary:"
-        echo "   - Backend: Render.com (Node.js)"
-        echo "   - Database: Hostinger MySQL"
-        echo "   - Frontend: Hostinger (Static Files)"
+        echo "✅ After setup, every push to main will auto-deploy!"
+        echo "🔧 Backend URL: https://genzflow-backend.onrender.com"
         echo ""
-        echo "🔧 Next Steps:"
-        echo "   1. Test API endpoints at https://genzflow-backend.onrender.com/api/health"
-        echo "   2. Verify database connection"
-        echo "   3. Test frontend-backend integration"
+        echo "📋 Benefits of Render Auto-Deploy:"
+        echo "   - Simpler setup (no GitHub secrets needed)"
+        echo "   - More reliable than GitHub Actions"
+        echo "   - Built-in build logs and monitoring"
+        echo "   - Automatic rollback on failure"
