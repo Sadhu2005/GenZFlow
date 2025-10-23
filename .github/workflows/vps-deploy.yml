@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy Frontend to Hostinger
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # Allows manual trigger
 
 jobs:
-  deploy-to-vps:
+  deploy-frontend:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +18,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: '**/package-lock.json'
+        cache-dependency-path: 'frontend/package-lock.json'
 
     - name: Install Frontend Dependencies
       run: |
@@ -30,86 +30,30 @@ jobs:
         cd frontend
         npm run build
 
-    - name: Install Backend Dependencies
-      run: |
-        cd backend
-        npm install --production
-
-    # Deploy to VPS via SSH
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v0.1.5
+    # Deploy to Hostinger via FTP
+    - name: Deploy to Hostinger
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        script: |
-          # Create directories
-          mkdir -p /var/www/genzflow/frontend
-          mkdir -p /var/www/genzflow/backend
-          
-          # Stop existing services
-          pm2 stop genzflow-backend || true
-          
-          # Remove old files
-          rm -rf /var/www/genzflow/frontend/*
-          rm -rf /var/www/genzflow/backend/*
-
-    # Upload Frontend
-    - name: Upload Frontend
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        source: "frontend/dist/*"
-        target: "/var/www/genzflow/frontend/"
-        strip_components: 2
-
-    # Upload Backend
-    - name: Upload Backend
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        source: "backend/*"
-        target: "/var/www/genzflow/backend/"
-        strip_components: 1
-
-    # Start services
-    - name: Start Services
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        script: |
-          # Set permissions
-          chown -R www-data:www-data /var/www/genzflow
-          
-          # Start backend with PM2
-          cd /var/www/genzflow/backend
-          pm2 start server.js --name genzflow-backend
-          pm2 save
-          pm2 startup
-          
-          # Restart Nginx
-          sudo systemctl restart nginx
-          
-          # Check status
-          pm2 status
-          sudo systemctl status nginx
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./frontend/dist/
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
 
     # Success Message
     - name: Deployment Success
       run: |
-        echo "🎉 GenZFlow deployed to VPS successfully!"
+        echo "🎉 GenZFlow Frontend deployed to Hostinger successfully!"
         echo ""
-        echo "🌐 Frontend: https://genzflow.genzspace.in"
-        echo "🔧 Backend API: https://genzflow.genzspace.in/api"
+        echo "🌐 Website: https://genzflow.genzspace.in"
+        echo "📁 Static files deployed to Hostinger"
         echo ""
-        echo "✅ Services running:"
-        echo "   - Nginx (reverse proxy)"
-        echo "   - PM2 (Node.js process manager)"
-        echo "   - MySQL database"
+        echo "✅ Deployment complete:"
+        echo "   - Frontend: Hostinger (Static Files)"
+        echo "   - Backend: Local Development"
+        echo "   - Database: Hostinger MySQL"
 
