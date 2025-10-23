@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { authAPI } from '../config/api'
 
 const AuthContext = createContext(null)
 
@@ -26,16 +27,19 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       setIsLoading(true)
-      // TODO: replace with backend API call
-      // const { data } = await axios.post('/api/auth/login', { email, password })
-      // setToken(data.token); setUser(data.user)
-      await new Promise(r => setTimeout(r, 600))
-      setToken('demo-token')
-      setUser({ id: 1, name: 'Demo User', email, role: 'CEO' })
-      toast.success('Signed in')
-      navigate('/')
+      const response = await authAPI.login({ email, password })
+      
+      if (response.success) {
+        setToken(response.data.token)
+        setUser(response.data.user)
+        toast.success('Signed in successfully')
+        navigate('/')
+      } else {
+        toast.error(response.message || 'Login failed')
+      }
     } catch (e) {
-      toast.error('Login failed')
+      console.error('Login error:', e)
+      toast.error('Login failed - check your credentials')
     } finally {
       setIsLoading(false)
     }
@@ -44,16 +48,19 @@ export function AuthProvider({ children }) {
   const register = async (name, email, password, role) => {
     try {
       setIsLoading(true)
-      // TODO: replace with backend API call
-      // const { data } = await axios.post('/api/auth/register', { name, email, password, role })
-      // setToken(data.token); setUser(data.user)
-      await new Promise(r => setTimeout(r, 800))
-      setToken('demo-token')
-      setUser({ id: 2, name, email, role })
-      toast.success('Account created successfully')
-      navigate('/')
+      const response = await authAPI.register({ name, email, password, role })
+      
+      if (response.success) {
+        setToken(response.data.token)
+        setUser(response.data.user)
+        toast.success('Account created successfully')
+        navigate('/')
+      } else {
+        toast.error(response.message || 'Registration failed')
+      }
     } catch (e) {
-      toast.error('Registration failed')
+      console.error('Registration error:', e)
+      toast.error('Registration failed - please try again')
     } finally {
       setIsLoading(false)
     }
