@@ -32,36 +32,48 @@ const handleResponseError = (error) => {
 
 // API endpoints
 export const authAPI = {
-  login: (credentials) => {
-    const config = {
-      method: 'POST',
-      url: '/api/auth/login',
-      data: credentials
+  login: async (credentials) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Login failed')
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('Login API error:', error)
+      throw error
     }
-    return fetch(`${API_BASE_URL}${config.url}`, {
-      method: config.method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...addAuthToken({ headers: {} }).headers
-      },
-      body: JSON.stringify(credentials)
-    }).then(res => res.json())
   },
   
-  register: (userData) => {
-    const config = {
-      method: 'POST',
-      url: '/api/auth/register',
-      data: userData
+  register: async (userData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Registration failed')
+      }
+      
+      return await response.json()
+    } catch (error) {
+      console.error('Registration API error:', error)
+      throw error
     }
-    return fetch(`${API_BASE_URL}${config.url}`, {
-      method: config.method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...addAuthToken({ headers: {} }).headers
-      },
-      body: JSON.stringify(userData)
-    }).then(res => res.json())
   }
 }
 

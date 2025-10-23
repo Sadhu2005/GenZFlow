@@ -25,6 +25,8 @@ export function AuthProvider({ children }) {
   }, [user])
 
   const login = async (email, password) => {
+    if (isLoading) return // Prevent double-click
+    
     try {
       setIsLoading(true)
       const response = await authAPI.login({ email, password })
@@ -39,13 +41,15 @@ export function AuthProvider({ children }) {
       }
     } catch (e) {
       console.error('Login error:', e)
-      toast.error('Login failed - check your credentials')
+      toast.error(e.message || 'Login failed - check your credentials')
     } finally {
       setIsLoading(false)
     }
   }
 
   const register = async (name, email, password, role) => {
+    if (isLoading) return // Prevent double-click
+    
     try {
       setIsLoading(true)
       const response = await authAPI.register({ name, email, password, role })
@@ -60,7 +64,7 @@ export function AuthProvider({ children }) {
       }
     } catch (e) {
       console.error('Registration error:', e)
-      toast.error('Registration failed - please try again')
+      toast.error(e.message || 'Registration failed - please try again')
     } finally {
       setIsLoading(false)
     }
