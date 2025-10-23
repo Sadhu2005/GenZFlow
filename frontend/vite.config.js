@@ -7,5 +7,21 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['lucide-react', 'recharts']
+        }
+      }
+    }
+  },
+  base: './'
 })
 
