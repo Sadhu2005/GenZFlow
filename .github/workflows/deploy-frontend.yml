@@ -3,11 +3,15 @@ name: Deploy Frontend to Hostinger
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch: # Allows manual trigger
 
 jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
+    name: Deploy Frontend to Hostinger
 
     steps:
     - name: Checkout code
@@ -20,18 +24,17 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'frontend/package-lock.json'
 
-    - name: Install Frontend Dependencies
+    - name: Install dependencies
       run: |
         cd frontend
-        npm install
+        npm ci
 
-    - name: Build Frontend
+    - name: Build frontend
       run: |
         cd frontend
         npm run build
 
-    # Deploy to Hostinger via FTP
-    - name: Deploy to Hostinger
+    - name: Deploy to Hostinger via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -43,17 +46,22 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
+          **/.DS_Store
+          **/Thumbs.db
 
-    # Success Message
     - name: Deployment Success
       run: |
-        echo "🎉 GenZFlow Frontend deployed to Hostinger successfully!"
+        echo "🎉 GenZFlow Frontend deployed successfully!"
         echo ""
         echo "🌐 Website: https://genzflow.genzspace.in"
         echo "📁 Static files deployed to Hostinger"
         echo ""
-        echo "✅ Deployment complete:"
+        echo "✅ Deployment Summary:"
         echo "   - Frontend: Hostinger (Static Files)"
         echo "   - Backend: Local Development"
         echo "   - Database: Hostinger MySQL"
-
+        echo ""
+        echo "🔧 Next Steps:"
+        echo "   1. Test your website at https://genzflow.genzspace.in"
+        echo "   2. Run backend locally for full functionality"
+        echo "   3. Check browser console for any errors"
