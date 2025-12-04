@@ -5,7 +5,7 @@ const morgan = require('morgan')
 const rateLimit = require('express-rate-limit')
 require('dotenv').config()
 
-const db = require('./config/database')
+const { connectDB } = require('./config/database')
 const authRoutes = require('./routes/auth')
 const employeeRoutes = require('./routes/employees')
 const taskRoutes = require('./routes/tasks')
@@ -94,22 +94,24 @@ app.use('*', (req, res) => {
   })
 })
 
-// Database connection test
-db.getConnection((err, connection) => {
-  if (err) {
-    console.error('Database connection failed:', err.message)
+// Connect to MongoDB and start server
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB()
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`)
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
+      console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error)
     process.exit(1)
   }
-  
-  console.log('✅ Database connected successfully')
-  connection.release()
-})
+}
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`)
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`)
-})
+startServer()
 
 module.exports = app

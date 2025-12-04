@@ -48,6 +48,19 @@ export default function Navbar() {
               <Users className="h-4 w-4" />
               <span>Org Chart</span>
             </Link>
+            {['CEO', 'Director', 'HR'].includes(user?.role) && (
+              <Link 
+                to="/members" 
+                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm transition ${
+                  isActive('/members') 
+                    ? 'bg-primary-100 text-primary-700' 
+                    : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                <span>Members</span>
+              </Link>
+            )}
           </nav>
         )}
         

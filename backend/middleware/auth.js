@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const { query } = require('../config/database')
+const Employee = require('../models/Employee')
 
 // Verify JWT token
 const authenticateToken = async (req, res, next) => {
@@ -17,19 +17,24 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     
     // Get user details from database
-    const users = await query(
-      'SELECT id, name, email, role, department_id, manager_id, is_active FROM employees WHERE id = ? AND is_active = TRUE',
-      [decoded.userId]
-    )
+    const user = await Employee.findById(decoded.userId)
 
-    if (users.length === 0) {
+    if (!user || !user.is_active) {
       return res.status(401).json({
         success: false,
         message: 'User not found or inactive'
       })
     }
 
-    req.user = users[0]
+    req.user = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      department_id: user.department_id,
+      manager_id: user.manager_id,
+      is_active: user.is_active
+    }
     next()
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -89,7 +94,7 @@ const requireOwnershipOrAdmin = (req, res, next) => {
     })
   }
 
-  const userId = parseInt(req.params.id || req.params.userId)
+  const userId = req.params.id || req.params.userId
   const isAdmin = ['CEO', 'Director', 'HR'].includes(req.user.role)
   const isOwnData = req.user.id === userId
 
@@ -111,13 +116,18 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET)
-      const users = await query(
-        'SELECT id, name, email, role, department_id, manager_id, is_active FROM employees WHERE id = ? AND is_active = TRUE',
-        [decoded.userId]
-      )
+      const user = await Employee.findById(decoded.userId)
 
-      if (users.length > 0) {
-        req.user = users[0]
+      if (user && user.is_active) {
+        req.user = {
+          id: user._id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          department_id: user.department_id,
+          manager_id: user.manager_id,
+          is_active: user.is_active
+        }
       }
     }
   } catch (error) {

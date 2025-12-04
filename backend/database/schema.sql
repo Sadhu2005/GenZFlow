@@ -19,6 +19,7 @@ CREATE TABLE employees (
   bio TEXT,
   join_date DATE,
   is_active BOOLEAN DEFAULT TRUE,
+  password_change_required BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (manager_id) REFERENCES employees(id) ON DELETE SET NULL
@@ -168,9 +169,10 @@ INSERT INTO departments (name, description, budget) VALUES
 ('Human Resources', 'Employee relations and recruitment', 150000.00),
 ('Finance', 'Financial management and accounting', 100000.00);
 
--- Insert sample CEO
-INSERT INTO employees (name, email, password_hash, role, department_id, join_date) VALUES
-('GenZFlow', 'ceo@genzflow.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'CEO', 1, '2020-01-01');
+-- Insert CEO (Sadhu J)
+-- Password: abcd@1234
+INSERT INTO employees (name, email, password_hash, role, department_id, join_date, password_change_required) VALUES
+('Sadhu J', 'sadhuj2005@gmail.com', '$2a$12$qhssDmxN3ep3mMhDed6dF.0tuqqiGMJyMQNCaf7vZxO3GenO5pE4y', 'CEO', 1, CURDATE(), FALSE);
 
 -- Insert sample employees
 INSERT INTO employees (name, email, password_hash, role, department_id, manager_id, join_date) VALUES

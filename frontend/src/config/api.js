@@ -124,8 +124,36 @@ export const tasksAPI = {
 
 export const employeesAPI = {
   getAll: () => {
+    const token = localStorage.getItem('token')
     return fetch(`${API_BASE_URL}/api/employees`, {
-      headers: addAuthToken({ headers: {} }).headers
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    }).then(res => res.json())
+  },
+  
+  create: (employeeData) => {
+    const token = localStorage.getItem('token')
+    return fetch(`${API_BASE_URL}/api/employees`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(employeeData)
+    }).then(res => res.json())
+  },
+  
+  changePassword: (passwordData) => {
+    const token = localStorage.getItem('token')
+    return fetch(`${API_BASE_URL}/api/auth/change-password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(passwordData)
     }).then(res => res.json())
   }
 }

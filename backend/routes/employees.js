@@ -144,7 +144,7 @@ router.get('/:id', authenticateToken, requireOwnershipOrAdmin, async (req, res) 
 router.post('/', authenticateToken, requireRole(['CEO', 'Director', 'HR']), [
   body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Name must be 2-100 characters'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').isIn(['CEO', 'Director', 'HR', 'Manager', 'Team Lead', 'Developer']).withMessage('Invalid role'),
   body('department_id').optional().isInt().withMessage('Invalid department ID'),
   body('manager_id').optional().isInt().withMessage('Invalid manager ID')
@@ -174,14 +174,18 @@ router.post('/', authenticateToken, requireRole(['CEO', 'Director', 'HR']), [
       })
     }
 
+    // Use default password if not provided
+    const DEFAULT_PASSWORD = 'GenZFlow@2024'
+    const employeePassword = password || DEFAULT_PASSWORD
+
     // Hash password
     const bcrypt = require('bcryptjs')
     const saltRounds = 12
-    const passwordHash = await bcrypt.hash(password, saltRounds)
+    const passwordHash = await bcrypt.hash(employeePassword, saltRounds)
 
-    // Insert new employee
+    // Insert new employee with password_change_required = TRUE
     const result = await query(
-      'INSERT INTO employees (name, email, password_hash, role, department_id, manager_id, bio, join_date) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())',
+      'INSERT INTO employees (name, email, password_hash, role, department_id, manager_id, bio, join_date, password_change_required) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE(), TRUE)',
       [name, email, passwordHash, role, department_id || null, manager_id || null, bio || null]
     )
 
@@ -201,8 +205,12 @@ router.post('/', authenticateToken, requireRole(['CEO', 'Director', 'HR']), [
 
     res.status(201).json({
       success: true,
-      message: 'Employee created successfully',
-      data: users[0]
+      message: 'Employee created successfully. Default password: ' + DEFAULT_PASSWORD + ' (must be changed on first login)',
+      data: {
+        ...users[0],
+        default_password: DEFAULT_PASSWORD,
+        password_change_required: true
+      }
     })
 
   } catch (error) {

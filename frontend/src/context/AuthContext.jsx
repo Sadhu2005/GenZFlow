@@ -34,8 +34,14 @@ export function AuthProvider({ children }) {
       if (response.success) {
         setToken(response.data.token)
         setUser(response.data.user)
-        toast.success('Signed in successfully')
-        navigate('/')
+        // Check if password change is required
+        if (response.data.user.password_change_required) {
+          // Don't navigate, let the app show password change modal
+          toast.success('Please set your password')
+        } else {
+          toast.success('Signed in successfully')
+          navigate('/')
+        }
       } else {
         toast.error(response.message || 'Login failed')
       }

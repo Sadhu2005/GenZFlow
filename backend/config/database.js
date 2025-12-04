@@ -1,118 +1,57 @@
-const mysql = require('mysql2')
+const mongoose = require('mongoose')
 require('dotenv').config()
 
-// Create connection pool for better performance
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'sadhu_company_db',
-  port: process.env.DB_PORT || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-})
+// MongoDB connection string
+const MONGODB_URI = process.env.MONGODB_URI || 
+  `mongodb://${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 27017}/${process.env.DB_NAME || 'genzflow_db'}`
 
-// Get connection from pool
-const getConnection = (callback) => {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error('Database connection error:', err)
-      return callback(err, null)
-    }
-    callback(null, connection)
-  })
+// Connection options
+const options = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 }
 
-// Execute query with promise support
-const query = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    pool.execute(sql, params, (err, results, fields) => {
-      if (err) {
-        console.error('Query error:', err)
-        return reject(err)
-      }
-      resolve(results)
-    })
-  })
+// Connect to MongoDB
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(MONGODB_URI, options)
+    console.log(`✅ MongoDB connected: ${conn.connection.host}`)
+    return conn
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error.message)
+    process.exit(1)
+  }
 }
 
-// Execute transaction
-const transaction = (queries) => {
-  return new Promise((resolve, reject) => {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        return reject(err)
-      }
-      
-      connection.beginTransaction((err) => {
-        if (err) {
-          connection.release()
-          return reject(err)
-        }
-        
-        const results = []
-        let completed = 0
-        
-        queries.forEach(({ sql, params }, index) => {
-          connection.execute(sql, params, (err, result) => {
-            if (err) {
-              connection.rollback(() => {
-                connection.release()
-                reject(err)
-              })
-              return
-            }
-            
-            results[index] = result
-            completed++
-            
-            if (completed === queries.length) {
-              connection.commit((err) => {
-                if (err) {
-                  connection.rollback(() => {
-                    connection.release()
-                    reject(err)
-                  })
-                  return
-                }
-                
-                connection.release()
-                resolve(results)
-              })
-            }
-          })
-        })
-      })
-    })
-  })
+// Test connection
+const testConnection = async () => {
+  try {
+    await mongoose.connection.db.admin().ping()
+    return true
+  } catch (error) {
+    return false
+  }
 }
 
-// Test database connection
-const testConnection = () => {
-  return new Promise((resolve, reject) => {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        reject(err)
-        return
-      }
-      
-      connection.ping((err) => {
-        connection.release()
-        if (err) {
-          reject(err)
-        } else {
-          resolve(true)
-        }
-      })
-    })
-  })
+// Get database instance
+const getDB = () => {
+  return mongoose.connection.db
+}
+
+// Close connection
+const closeConnection = async () => {
+  try {
+    await mongoose.connection.close()
+    console.log('MongoDB connection closed')
+  } catch (error) {
+    console.error('Error closing MongoDB connection:', error)
+  }
 }
 
 module.exports = {
-  pool,
-  getConnection,
-  query,
-  transaction,
-  testConnection
+  connectDB,
+  testConnection,
+  getDB,
+  closeConnection,
+  mongoose
 }
